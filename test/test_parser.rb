@@ -26,6 +26,10 @@ class TestParser < Test::Unit::TestCase
     assert_equal q, s.gsub(%q('), %q("))
   end
 
+  def test_insert_with_values_list
+    assert_understands "INSERT INTO `users` VALUES ('a', 'b'), ('c', 'd')"
+  end
+
   def test_case_insensitivity
     assert_sql 'SELECT * FROM `users` WHERE `id` = 1', 'select * from users where id = 1'
   end

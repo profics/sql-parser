@@ -43,18 +43,22 @@ rule
     : query_specification
 
   insert_specification 
-    : INSERT INTO table_reference value_list { result = SQLParser::Statement::Insert.new(val[2], nil, val[3]) }
-    | INSERT INTO table_reference column_list value_list { result = SQLParser::Statement::Insert.new(val[2], val[3], val[4]) }
+    : INSERT INTO table_reference VALUES value_list_list { result = SQLParser::Statement::Insert.new(val[2], nil, val[4]) }
+    | INSERT INTO table_reference column_list VALUES value_list_list { result = SQLParser::Statement::Insert.new(val[2], val[3], val[5]) }
 
   column_list
     : left_paren in_column_list right_paren { result = SQLParser::Statement::InColumnList.new(val[1]) }
  
   in_column_list
     : value_expression comma in_column_list { result = Array(val[0]) + Array(val[2]) }
-	  | value_expression
+	| value_expression
   
+  value_list_list
+    : value_list comma value_list_list { result = Array(val[0]) + Array(val[2]) }
+    | value_list { result = Array(val[0]) }
+
   value_list
-    : VALUES left_paren in_value_list right_paren { result = SQLParser::Statement::InValueList.new(val[2]) }
+    : left_paren in_value_list right_paren { result = SQLParser::Statement::InValueList.new(val[1]) }
 
   query_specification
     : SELECT select_list table_expression { result = SQLParser::Statement::Select.new(val[1], val[2]) }
