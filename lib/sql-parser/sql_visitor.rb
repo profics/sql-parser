@@ -326,7 +326,11 @@ module SQLParser
     end
 
     def escape(str)
-      str.gsub(/'/, "''")
+      s = str
+      s = s.gsub(%Q(\\), %q(\\\\\\\\))
+      s = s.gsub(%q('), %q(\\\\'))
+      s = s.gsub(%Q(\r), %q(\\\\r))
+      s = s.gsub(%Q(\n), %q(\\\\n))
     end
 
     def arithmetic(operator, o)

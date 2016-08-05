@@ -45,7 +45,7 @@ class SQLParser::Parser < Racc::Parser
 
   def next_token
     return if @ss.eos?
-
+    
     # skips empty actions
     until token = _next_token or @ss.eos?; end
     token
@@ -57,16 +57,16 @@ class SQLParser::Parser < Racc::Parser
     token = case @state
     when nil
       case
-      when (text = @ss.scan(/\"[0-9]+-[0-9]+-[0-9]+\"/i))
+      when (text = @ss.scan(/"[0-9]+-[0-9]+-[0-9]+"/i))
          action { [:date_string, Date.parse(text)] }
 
-      when (text = @ss.scan(/\'[0-9]+-[0-9]+-[0-9]+\'/i))
+      when (text = @ss.scan(/'[0-9]+-[0-9]+-[0-9]+'/i))
          action { [:date_string, Date.parse(text)] }
 
-      when (text = @ss.scan(/\'/i))
+      when (text = @ss.scan(/'/i))
          action { @state = :STRS;  [:quote, text] }
 
-      when (text = @ss.scan(/\"/i))
+      when (text = @ss.scan(/"/i))
          action { @state = :STRD;  [:quote, text] }
 
       when (text = @ss.scan(/[0-9]+/i))
@@ -243,12 +243,6 @@ class SQLParser::Parser < Racc::Parser
       when (text = @ss.scan(/\w+/i))
          action { [:identifier, text] }
 
-      when (text = @ss.scan(/----/i))
-        ;
-
-      when (text = @ss.scan(/require/i))
-        ;
-
       else
         text = @ss.string[@ss.pos .. -1]
         raise  ScanError, "can not match: '" + text + "'"
@@ -256,11 +250,11 @@ class SQLParser::Parser < Racc::Parser
 
     when :STRS
       case
-      when (text = @ss.scan(/\'/i))
-         action { @state = nil;    [:quote, text] }
+      when (text = @ss.scan(/([^'\\]|''|\\[rn'"\\])+/i))
+         action {                  [:character_string_literal, dequote(text, "'")] }
 
-      when (text = @ss.scan(/.*(?=\')/i))
-         action {                 [:character_string_literal, text.gsub("''", "'")] }
+      when (text = @ss.scan(/'/i))
+         action { @state = nil;    [:quote, text] }
 
       else
         text = @ss.string[@ss.pos .. -1]
@@ -269,11 +263,11 @@ class SQLParser::Parser < Racc::Parser
 
     when :STRD
       case
-      when (text = @ss.scan(/\"/i))
-         action { @state = nil;    [:quote, text] }
+      when (text = @ss.scan(/([^"\\]|""|\\[rn'"\\])+/i))
+         action {                  [:character_string_literal, dequote(text, '"')] }
 
-      when (text = @ss.scan(/.*(?=\")/i))
-         action {                 [:character_string_literal, text.gsub('""', '"')] }
+      when (text = @ss.scan(/"/i))
+         action { @state = nil;    [:quote, text] }
 
       else
         text = @ss.string[@ss.pos .. -1]
@@ -286,4 +280,15 @@ class SQLParser::Parser < Racc::Parser
     token
   end  # def _next_token
 
+  def mysub(string, pattern, replacement)
+    result = string.gsub(pattern, replacement)
+    puts "s: #{string}  p: #{pattern}  r: #{replacement}  = #{result}"
+    result
+  end
+  def dequote(string, quote)
+    s = string.gsub(quote+quote, quote)
+    s = s.gsub("\\r", "\r")
+    s = s.gsub("\\n", "\n")
+    s = s.gsub(%r{\\(['"\\])}, '\1')
+  end
 end # class

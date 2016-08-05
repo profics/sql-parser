@@ -3,6 +3,20 @@ class SQLParser::Parser
 option
   ignorecase
 
+inner
+  def mysub(string, pattern, replacement)
+    result = string.gsub(pattern, replacement)
+    puts "s: #{string}  p: #{pattern}  r: #{replacement}  = #{result}"
+    result
+  end
+
+  def dequote(string, quote)
+    s = string.gsub(quote+quote, quote)
+    s = s.gsub("\\r", "\r")
+    s = s.gsub("\\n", "\n")
+    s = s.gsub(%r{\\(['"\\])}, '\1')
+  end
+
 macro
   DIGIT   [0-9]
   UINT    {DIGIT}+
@@ -15,20 +29,23 @@ macro
 
   IDENT   \w+
 
+  STRLITS ([^'\\]|''|\\[rn'"\\])
+  STRLITD ([^"\\]|""|\\[rn'"\\])
+
 rule
 # [:state]  pattern       [actions]
 
 # literals
-            \"{DATE}\"    { [:date_string, Date.parse(text)] }
-            \'{DATE}\'    { [:date_string, Date.parse(text)] }
+            "{DATE}"      { [:date_string, Date.parse(text)] }
+            '{DATE}'      { [:date_string, Date.parse(text)] }
 
-            \'            { @state = :STRS;  [:quote, text] }
-  :STRS     \'            { @state = nil;    [:quote, text] }
-  :STRS     .*(?=\')      {                  [:character_string_literal, text.gsub("''", "'")] }
+            '             { @state = :STRS;  [:quote, text] }
+  :STRS     {STRLITS}+    {                  [:character_string_literal, dequote(text, "'")] }
+  :STRS     '             { @state = nil;    [:quote, text] }
 
-            \"            { @state = :STRD;  [:quote, text] }
-  :STRD     \"            { @state = nil;    [:quote, text] }
-  :STRD     .*(?=\")      {                  [:character_string_literal, text.gsub('""', '"')] }
+            "             { @state = :STRD;  [:quote, text] }
+  :STRD     {STRLITD}+    {                  [:character_string_literal, dequote(text, '"')] }
+  :STRD     "             { @state = nil;    [:quote, text] }
 
             {UINT}        { [:unsigned_integer, text.to_i] }
 
@@ -99,5 +116,4 @@ rule
             `{IDENT}`     { [:identifier, text[1..-2]] }
             {IDENT}       { [:identifier, text] }
 
----- header ----
-require 'date'
+end
