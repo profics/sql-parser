@@ -231,6 +231,9 @@ rule
 
   value_expression
     : numeric_value_expression
+    | NULL { result = SQLParser::Statement::Null.new }
+    | TRUE { result = SQLParser::Statement::True.new }
+    | FALSE { result = SQLParser::Statement::False.new }
     | general_literal
 
   numeric_value_expression

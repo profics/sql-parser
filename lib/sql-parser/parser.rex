@@ -71,6 +71,8 @@ rule
             LIKE          { [:LIKE, text] }
             IS            { [:IS, text] }
             NULL          { [:NULL, text] }
+            TRUE          { [:TRUE, text] }
+            FALSE         { [:FALSE, text] }
             COUNT         { [:COUNT, text] }
             AVG           { [:AVG, text] }
             MAX           { [:MAX, text] }

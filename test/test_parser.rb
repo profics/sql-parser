@@ -18,6 +18,10 @@ class TestParser < Test::Unit::TestCase
   def test_insert_into_clause_strings
     assert_understands "INSERT INTO `users` VALUES ('a', 'b')"
   end
+
+  def test_insert_with_special_values
+    assert_understands "INSERT INTO `users` VALUES (1, 'a', TRUE, FALSE, NULL)"
+  end
   
   def test_insert_with_quotes
     q = 'INSERT INTO `users` (`active`, `created_on`, `email`, `last_login`, `password`, `salt`, `username`) VALUES ("a", "b", "c", "d", "e")'

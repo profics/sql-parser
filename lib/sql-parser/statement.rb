@@ -511,6 +511,6 @@ module SQLParser
 
     class Integer < Literal
     end
-    
+
   end
 end
